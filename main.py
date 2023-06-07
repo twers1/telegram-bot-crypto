@@ -74,32 +74,36 @@ def eeth(message):
     convert2 = message.text
     convert2 = int(convert2)
 
-    price = cg.get_price(ids='bitcoin', vs_currencies='usd')
+    price = cg.get_price(ids='ethereum', vs_currencies='usd')
     bot.send_message(message.chat.id, f'{convert2} ETH == {price["ethereum"]["usd"] * convert2} $')
+    main(message)
 
 
 def lltc(message):
     convert2 = message.text
     convert2 = int(convert2)
 
-    price = cg.get_price(ids='bitcoin', vs_currencies='usd')
-    bot.send_message(message.chat.id, f'{convert2} BTC == {price["bitcoin"]["usd"] * convert2} $')
+    price = cg.get_price(ids='litecoin', vs_currencies='usd')
+    bot.send_message(message.chat.id, f'{convert2} BTC == {price["litecoin"]["usd"] * convert2} $')
+    main(message)
 
 
 def mmatic(message):
     convert2 = message.text
     convert2 = int(convert2)
 
-    price = cg.get_price(ids='bitcoin', vs_currencies='usd')
-    bot.send_message(message.chat.id, f'{convert2} BTC == {price["bitcoin"]["usd"] * convert2} $')
+    price = cg.get_price(ids='matic-network', vs_currencies='usd')
+    bot.send_message(message.chat.id, f'{convert2} BTC == {price["matic-network"]["usd"] * convert2} $')
+    main(message)
 
 
 def uuni(message):
     convert2 = message.text
     convert2 = int(convert2)
 
-    price = cg.get_price(ids='bitcoin', vs_currencies='usd')
-    bot.send_message(message.chat.id, f'{convert2} BTC == {price["bitcoin"]["usd"] * convert2} $')
+    price = cg.get_price(ids='uniswap', vs_currencies='usd')
+    bot.send_message(message.chat.id, f'{convert2} BTC == {price["uniswap"]["usd"] * convert2} $')
+    main(message)
 
 
 def step2(message):
@@ -107,6 +111,7 @@ def step2(message):
     b2.add(types.KeyboardButton('Курс к USD'), types.KeyboardButton('Курс к RUB'), types.KeyboardButton('Главное меню'))
     q = bot.send_message(message.chat.id, 'Выберите курс: ', reply_markup=b2)
     bot.register_next_step_handler(q, step3)
+
 
 
 def fiat(message):
