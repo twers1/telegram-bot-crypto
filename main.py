@@ -6,33 +6,32 @@ from telebot import types
 from pycoingecko import CoinGeckoAPI
 from dotenv import load_dotenv
 
-
-
 cg = CoinGeckoAPI()
 
 load_dotenv()
 bot = telebot.TeleBot(os.getenv('TOKEN'))
 
 
+# Данная функция при нажатии "START" - выводит текст приветствия и кнопки с выбором биржи
 @bot.message_handler(commands=['start'])
 def main(message):
     b1 = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    b1.add(types.KeyboardButton(text='Курс крипты'), types.KeyboardButton(text='Курс фиата'), types.KeyboardButton(text='Конвертер'))
+    b1.add(types.KeyboardButton(text='Coin Gecko'), types.KeyboardButton(text='Binance'))
     cr = bot.send_message(message.chat.id,
                           text='Привет! Я бот, который занимается криптовалютой\nВы сможете тут узнать курс любой валюты\n',
                           reply_markup=b1)
     bot.register_next_step_handler(cr, step)
 
 
+# Функция для выбора биржи
 def step(message):
-    if message.text == 'Курс крипты':
-        step2(message)
-    elif message.text == 'Курс фиата':
-        fiat(message)
-    elif message.text == 'Конвертер':
-        convert1(message)
+    if message.text == 'Coin Gecko':
+        step1(message)
+    elif message.text == 'Binance':
+        pass
 
 
+# Данная функция даёт выбрать нужную криптовалюту
 def convert1(message):
     b1 = types.ReplyKeyboardMarkup(resize_keyboard=True)
     b1.add(types.KeyboardButton('Bitcoin'), types.KeyboardButton('Ethereum'), types.KeyboardButton('Litecoin'),
@@ -41,6 +40,7 @@ def convert1(message):
     bot.register_next_step_handler(msg, convert2)
 
 
+# Данная функция предалагает конвертировать нужную криптовалюту
 def convert2(message):
     if message.text == 'Bitcoin':
         msg = bot.send_message(message.chat.id, 'Сколько вы хотите конвертировать BTC?')
@@ -61,6 +61,7 @@ def convert2(message):
         main(message)
 
 
+# Данная функция конвертирует криптовалюту BTC в доллары
 def bbtc(message):
     convert2 = message.text
     convert2 = int(convert2)
@@ -70,6 +71,7 @@ def bbtc(message):
     main(message)
 
 
+# Данная функция конвертирует криптовалюту ETH в доллары
 def eeth(message):
     convert2 = message.text
     convert2 = int(convert2)
@@ -79,58 +81,61 @@ def eeth(message):
     main(message)
 
 
+# Данная функция конвертирует криптовалюту LTC в доллары
 def lltc(message):
     convert2 = message.text
     convert2 = int(convert2)
 
     price = cg.get_price(ids='litecoin', vs_currencies='usd')
-    bot.send_message(message.chat.id, f'{convert2} BTC == {price["litecoin"]["usd"] * convert2} $')
+    bot.send_message(message.chat.id, f'{convert2} LTC == {price["litecoin"]["usd"] * convert2} $')
     main(message)
 
 
+# Данная функция конвертирует криптовалюту MATIC в доллары
 def mmatic(message):
     convert2 = message.text
     convert2 = int(convert2)
 
     price = cg.get_price(ids='matic-network', vs_currencies='usd')
-    bot.send_message(message.chat.id, f'{convert2} BTC == {price["matic-network"]["usd"] * convert2} $')
+    bot.send_message(message.chat.id, f'{convert2} Matic == {price["matic-network"]["usd"] * convert2} $')
     main(message)
 
 
+# Данная функция конвертирует криптовалюту UNI в доллары
 def uuni(message):
     convert2 = message.text
     convert2 = int(convert2)
 
     price = cg.get_price(ids='uniswap', vs_currencies='usd')
-    bot.send_message(message.chat.id, f'{convert2} BTC == {price["uniswap"]["usd"] * convert2} $')
+    bot.send_message(message.chat.id, f'{convert2} UNI == {price["uniswap"]["usd"] * convert2} $')
     main(message)
 
 
-def step2(message):
+# Функция предлагает выбрать дальнейшие действия для работы с биржей
+def step1(message):
+    b1 = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    b1.add(types.KeyboardButton('Курс криптовалюты'), types.KeyboardButton('Конвертер'))
+    msg = bot.send_message(message.chat.id, 'Выберите что вы хотите', reply_markup=b1)
+    bot.register_next_step_handler(msg, choice_buttons)
+
+
+def choice_buttons(message):
+    if message.text == 'Курс криптовалюты':
+        step3(message)
+    elif message.text == 'Конвертер':
+        convert1(message)
+
+
+# Функция выбора дальнейших действий для работы с криптовалютой
+def step3(message):
     b2 = types.ReplyKeyboardMarkup(resize_keyboard=True)
     b2.add(types.KeyboardButton('Курс к USD'), types.KeyboardButton('Курс к RUB'), types.KeyboardButton('Главное меню'))
     q = bot.send_message(message.chat.id, 'Выберите курс: ', reply_markup=b2)
-    bot.register_next_step_handler(q, step3)
+    bot.register_next_step_handler(q, step4)
 
 
-
-def fiat(message):
-    b1 = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    b1.add(types.KeyboardButton('USD'), types.KeyboardButton('RUB'), types.KeyboardButton('Главная'))
-    q = bot.send_message(message.chat.id, 'Курс фиата:', reply_markup=b1)
-    bot.register_next_step_handler(q, fiat_step2)
-
-
-def fiat_step2(message):
-    if message.text == 'USD':
-        price = convert(base='USD', amount=1, to=['RUB', 'EUR'])
-        bot.send_message(message.chat.id, f'1 USD == {price["RUB"]}\n'
-                                          f'1 USD == {price["EUR"]}')
-
-
-def step3(message):
-    b2 = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    b2.add(types.KeyboardButton('Назад'))
+# Функция для вывода курса криптовалюты к USD и RUB
+def step4(message):
     if message.text == 'Курс к USD':
         price = cg.get_price(ids='bitcoin-cash, ethereum, litecoin, matic-network, uniswap, bitcoin', vs_currencies='usd')
         bot.send_message(message.chat.id, f'Bitcoin Cash== {price["bitcoin-cash"]["usd"]} $\n'
@@ -138,7 +143,9 @@ def step3(message):
                                       f'Litecoin == {price["litecoin"]["usd"]} $\n'
                                       f'Polygon == {price["matic-network"]["usd"]} $\n'
                                       f'Uniswap == {price["uniswap"]["usd"]} $\n'
-                                      f'Bitcoin == {price["bitcoin"]["usd"]} $', reply_markup=b2)
+                                      f'Bitcoin == {price["bitcoin"]["usd"]} $')
+        step3(message)
+
     elif message.text == 'Курс к RUB':
         price = cg.get_price(ids='bitcoin-cash, ethereum, litecoin, matic-network, uniswap, bitcoin', vs_currencies='rub')
         bot.send_message(message.chat.id, f'Bitcoin Cash== {price["bitcoin-cash"]["rub"]} ₽\n'
@@ -146,16 +153,14 @@ def step3(message):
                                       f'Litecoin == {price["litecoin"]["rub"]} ₽\n'
                                       f'Polygon == {price["matic-network"]["rub"]} ₽\n'
                                       f'Uniswap == {price["uniswap"]["rub"]} ₽\n'
-                                      f'Bitcoin == {price["bitcoin"]["rub"]} ₽', reply_markup=b2)
-    elif message.text == 'Главная':
+                                      f'Bitcoin == {price["bitcoin"]["rub"]} ₽')
+        step3(message)
+
+    elif message.text == 'Главное меню':
         main(message)
 
-    go_main = bot.send_message(message.chat.id, 'Вернуться назад: ', reply_markup=b2)
-    bot.register_next_step_handler(go_main, step2)
 
-
-
-
+# Запуск бота в телеграм
 if __name__ == '__main__':
     # get_data()
     bot.polling()
