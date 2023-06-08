@@ -2,11 +2,23 @@ import os
 import requests
 import telebot
 
+from binance import Client
 from telebot import types
 from pycoingecko import CoinGeckoAPI
 from dotenv import load_dotenv
 
+import pandas as pd
+
+client = Client(os.getenv('apikey_binance'), os.getenv('secret_binance'))
 cg = CoinGeckoAPI()
+tickers = client.get_all_tickers()
+print(tickers)
+ticker_df = pd.DataFrame(tickers)
+print(ticker_df)
+float(ticker_df.loc['ETHBTC']['price'])
+depth = client.get_order_book(symbol='BTCUSDT')
+print(depth)
+historical = client.get_historical_klines('ETHBTC', Client.KLINE_INTERVAL_1DAY, '8 June 2023')
 
 load_dotenv()
 bot = telebot.TeleBot(os.getenv('TOKEN'))
