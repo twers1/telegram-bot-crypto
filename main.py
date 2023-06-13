@@ -1,4 +1,6 @@
 import os
+import time
+
 import requests
 import telebot
 
@@ -9,15 +11,27 @@ from dotenv import load_dotenv
 
 import pandas as pd
 
+# Забираем клиента(его api и secret api)
 client = Client(os.getenv('apikey_binance'), os.getenv('secret_binance'))
+
+# Подключение api CoinGecko
 cg = CoinGeckoAPI()
+
+# Получение текущих тикеров с помощью метода get_all_tickers()
 tickers = client.get_all_tickers()
+# В консоли показаны все тикеры
 print(tickers)
+
+# Мы обращаемся к библиотеке pandas и получаем данные, которые находятся в переменное tickers. Также показывает в консоли результат
 ticker_df = pd.DataFrame(tickers)
 print(ticker_df)
-float(ticker_df.loc['ETHBTC']['price'])
+
+# Переменная depth хранит в себе информацию: получение глубину рынка, с помощью метода get_order_book(в параментрах указываем какую криптовалюту будем использовать)
+# Также показываем результат в консоли
 depth = client.get_order_book(symbol='BTCUSDT')
 print(depth)
+
+# Переменная historical хранит в себе информацию: получение исторических данных по клину из любого диапазона дат
 historical = client.get_historical_klines('ETHBTC', Client.KLINE_INTERVAL_1DAY, '8 June 2023')
 
 load_dotenv()
@@ -40,9 +54,10 @@ def step(message):
     if message.text == 'Coin Gecko':
         step1(message)
     elif message.text == 'Binance':
-        pass
+        binance_keyboard(message)
 
 
+# Все функции для работы с CoinGecko
 # Данная функция даёт выбрать нужную криптовалюту
 def convert1(message):
     b1 = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -172,8 +187,94 @@ def step4(message):
         main(message)
 
 
+# Все функции, которые принадлежат Binance
+def binance_keyboard(message):
+    b1 = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    b1.add(types.KeyboardButton('Топовая криптовалюта'), types.KeyboardButton('Последние данные'), types.KeyboardButton('strategy'))
+    msg = bot.send_message(message.chat.id, 'Выберите что вы хотите', reply_markup=b1)
+    bot.register_next_step_handler(msg, choice_buttons_binance)
+
+
+def choice_buttons_binance(message, ):
+    if message.text == 'Топовая криптовалюта':
+        top_coin(message)
+    elif message.text == 'Последние данные':
+        symbol = 'BTCUSDT'
+        interval = '1m'
+        lookback = '30'
+        last_data(symbol, interval, lookback, message)
+    elif message.text == 'Strategy':
+        strategy()
+
+
+def top_coin(message):
+    all_tickers = pd.DataFrame(client.get_ticker())
+    usdt = all_tickers[all_tickers.symbol.str.contains('USDT')]
+    work = usdt[~((usdt.symbol.str.contains('UP')) | (usdt.symbol.str.contains('DOWN')))]
+    top_coin = work[work.priceChangePercent == work.priceChangePercent.max()]
+    top_coin = top_coin.symbol.values[0]
+    bot.send_message(message.chat.id, text=f'Самая топовая криптовалюта на текущее время: {top_coin}')
+
+
+def last_data(symbol, interval, lookback, message):
+    frame = pd.DataFrame(client.get_historical_klines(symbol, interval, lookback + 'min ago UTC'))
+    frame = frame.iloc[:,:6]
+    frame.columns = ['Time', 'Open', 'High', 'Low', 'Close', 'Volume']
+    frame = frame.set_index('Time')
+    frame.index = pd.to_datetime(frame.index, unit= 'ms')
+    bot.send_message(message.chat.id, f'Последние данные: {frame}')
+
+
+def strategy(buy_amt, SL=0.985, Target=1.02, open_position=False):
+    try:
+        asset = top_coin()
+        df = last_data(asset, '1m', '120')
+    except:
+        time.sleep(61)
+        asset = top_coin()
+        df = last_data(asset, '1m', '120')
+
+    qty = round(buy_amt/df.Close.iloc[-1], 1)
+
+    if ((df.Close.pct_change() + 1).cumprod()).iloc[-1] > 1:
+        print(asset)
+        print(df.Close.iloc[-1])
+        print(qty)
+        order = client.create_order(symbol=asset, side='BUY', type='MARKET', quantity = qty)
+        print(order)
+        buyprice = float(order['fills'][0]['price'])
+        open_position = True
+
+        while open_position:
+            try:
+                df = last_data(asset, '1m', '2')
+            except:
+                print('Restart after 1 min')
+                time.sleep(61)
+                df = last_data(asset, '1m', '2')
+
+            print(f'Price ' + str(df.Close[-1]))
+            print(f'Target ' + str(buyprice * Target))
+            print(f'Stop ' + str(buyprice * SL))
+            if df.Close[-1] <= buyprice * SL or df.Close[-1] >= buyprice * Target:
+                order = client.create_order(symbol=asset, side='SELL', type='MARKET', quantity = qty)
+                print(order)
+                break
+
+    else:
+        print('No find')
+        time.sleep(200)
+
+    while True:
+        strategy(15)
+
+
+
+
 # Запуск бота в телеграм
 if __name__ == '__main__':
     # get_data()
+    print(
+        "                                                      ████ \n ░░███                                               ░░███ \n ███████   █████ ███ █████  ██████  ████████   █████  ░███ \n░░░███░   ░░███ ░███░░███  ███░░███░░███░░███ ███░░   ░███ \n  ░███     ░███ ░███ ░███ ░███████  ░███ ░░░ ░░█████  ░███ \n  ░███ ███ ░░███████████  ░███░░░   ░███      ░░░░███ ░███ \n  ░░█████   ░░████░████   ░░██████  ░███████  ██████  █████\n   ░░░░░     ░░░░ ░░░░     ░░░░░░  ░░░░░     ░░░░░░  ░░░░░ \n                                                           \n                                                           \n                                                           \nBot started successfully")
     bot.polling()
-
+    print("Bot stopped")
