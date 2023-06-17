@@ -20,21 +20,20 @@ cg = CoinGeckoAPI()
 # Получение текущих тикеров с помощью метода get_all_tickers()
 tickers = client.get_all_tickers()
 # В консоли показаны все тикеры
-print(tickers)
+# print(tickers)
 
 # Мы обращаемся к библиотеке pandas и получаем данные, которые находятся в переменное tickers. Также показывает в консоли результат
 ticker_df = pd.DataFrame(tickers)
-print(ticker_df)
+# print(ticker_df)
 
 # Переменная depth хранит в себе информацию: получение глубину рынка, с помощью метода get_order_book(в параментрах указываем какую криптовалюту будем использовать)
 # Также показываем результат в консоли
 depth = client.get_order_book(symbol='BTCUSDT')
-print(depth)
+# print(depth)
 
 # Переменная historical хранит в себе информацию: получение исторических данных по клину из любого диапазона дат
 historical = client.get_historical_klines('ETHBTC', Client.KLINE_INTERVAL_1DAY, '8 June 2023')
 
-load_dotenv()
 bot = telebot.TeleBot(os.getenv('TOKEN'))
 
 
@@ -267,8 +266,6 @@ def strategy(buy_amt, SL=0.985, Target=1.02, open_position=False):
 
     while True:
         strategy(15)
-
-
 
 
 # Запуск бота в телеграм
