@@ -15,6 +15,17 @@ Used binance and coin gecko to get current values in crypto
 - top cryptocurrency at the moment
 - recent data
 
+## Demo 
+
+
+## Docker
+
+```
+docker build -t parsing-bot .
+
+docker run -e TOKEN= -e apikey_binance= -e secret_binance= parsing-bot
+```
+
 
 # Бот, занимающийся парсингом криптовалютных бирж
 
@@ -32,3 +43,14 @@ Used binance and coin gecko to get current values in crypto
 
 - просмотр текущей топовой криптовалюты 
 - последние данные
+
+
+## Демонстрация 
+
+## Docker
+
+```
+docker build -t parsing-bot .
+
+docker run -e TOKEN= -e apikey_binance= -e secret_binance= parsing-bot
+```

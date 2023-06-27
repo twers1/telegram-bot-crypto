@@ -34,6 +34,8 @@ depth = client.get_order_book(symbol='BTCUSDT')
 # Переменная historical хранит в себе информацию: получение исторических данных по клину из любого диапазона дат
 historical = client.get_historical_klines('ETHBTC', Client.KLINE_INTERVAL_1DAY, '8 June 2023')
 
+load_dotenv()
+
 bot = telebot.TeleBot(os.getenv('TOKEN'))
 
 
@@ -43,7 +45,8 @@ def main(message):
     b1 = types.ReplyKeyboardMarkup(resize_keyboard=True)
     b1.add(types.KeyboardButton(text='Coin Gecko'), types.KeyboardButton(text='Binance'))
     cr = bot.send_message(message.chat.id,
-                          text='Привет! Я бот, который занимается криптовалютой\nВы сможете тут узнать курс любой валюты\n',
+                          text='Привет! Я бот, который занимается криптовалютой\n'
+                               'Вы сможете тут узнать курс любой валюты\n',
                           reply_markup=b1)
     bot.register_next_step_handler(cr, step)
 
@@ -189,12 +192,12 @@ def step4(message):
 # Все функции, которые принадлежат Binance
 def binance_keyboard(message):
     b1 = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    b1.add(types.KeyboardButton('Топовая криптовалюта'), types.KeyboardButton('Последние данные'), types.KeyboardButton('strategy'))
+    b1.add(types.KeyboardButton('Топовая криптовалюта'), types.KeyboardButton('Последние данные'), types.KeyboardButton('strategy'), types.KeyboardButton('Получить цены'))
     msg = bot.send_message(message.chat.id, 'Выберите что вы хотите', reply_markup=b1)
     bot.register_next_step_handler(msg, choice_buttons_binance)
 
 
-def choice_buttons_binance(message, ):
+def choice_buttons_binance(message):
     if message.text == 'Топовая криптовалюта':
         top_coin(message)
     elif message.text == 'Последние данные':
@@ -204,6 +207,8 @@ def choice_buttons_binance(message, ):
         last_data(symbol, interval, lookback, message)
     elif message.text == 'Strategy':
         strategy()
+    elif message.text == 'Получить цены':
+        depth_send(message)
 
 
 def top_coin(message):
@@ -268,10 +273,15 @@ def strategy(buy_amt, SL=0.985, Target=1.02, open_position=False):
         strategy(15)
 
 
+def depth_send(message):
+    get_depth = client.get_order_book(symbol='BNBBTC')
+    prices = client.get_all_tickers()
+    bot.send_message(message.chat.id, f'Получить цены: {prices}')
+
+
 # Запуск бота в телеграм
 if __name__ == '__main__':
     # get_data()
-    print(
-        "                                                      ████ \n ░░███                                               ░░███ \n ███████   █████ ███ █████  ██████  ████████   █████  ░███ \n░░░███░   ░░███ ░███░░███  ███░░███░░███░░███ ███░░   ░███ \n  ░███     ░███ ░███ ░███ ░███████  ░███ ░░░ ░░█████  ░███ \n  ░███ ███ ░░███████████  ░███░░░   ░███      ░░░░███ ░███ \n  ░░█████   ░░████░████   ░░██████  ░███████  ██████  █████\n   ░░░░░     ░░░░ ░░░░     ░░░░░░  ░░░░░     ░░░░░░  ░░░░░ \n                                                           \n                                                           \n                                                           \nBot started successfully")
+    print("                                                      ████ \n ░░███                                               ░░███ \n ███████   █████ ███ █████  ██████  ████████   █████  ░███ \n░░░███░   ░░███ ░███░░███  ███░░███░░███░░███ ███░░   ░███ \n  ░███     ░███ ░███ ░███ ░███████  ░███ ░░░ ░░█████  ░███ \n  ░███ ███ ░░███████████  ░███░░░   ░███      ░░░░███ ░███ \n  ░░█████   ░░████░████   ░░██████  ░███████  ██████  █████\n   ░░░░░     ░░░░ ░░░░     ░░░░░░  ░░░░░     ░░░░░░  ░░░░░ \n                                                           \n                                                           \n                                                           \nBot started successfully")
     bot.polling()
     print("Bot stopped")
